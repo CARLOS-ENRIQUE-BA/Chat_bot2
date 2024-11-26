@@ -1,45 +1,39 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Button, Linking, StyleSheet } from 'react-native';
-import * as Location from 'expo-location';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
+import { BarCodeScanner } from 'expo-barcode-scanner';
+import { useNavigation } from '@react-navigation/native';
 
-const GPSPage = () => {
-  const [location, setLocation] = useState(null);
-  const [errorMsg, setErrorMsg] = useState(null);
+const QRPage = () => {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        return;
-      }
-
-    // Obtener la posición actual
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);  // Guardar la ubicación en el estado
+      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      setHasPermission(status === 'granted');
     })();
   }, []);
 
-  const openMaps = () => {
-    if (location) {
-      const { latitude, longitude } = location.coords;
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
-      Linking.openURL(url);
-    }
+  const handleBarCodeScanned = ({ type, data }) => {
+    setScanned(true);
+    navigation.navigate('GeminaiChat', { qrData: data });
   };
+
+  if (hasPermission === null) {
+    return <Text>Requesting for camera permission</Text>;
+  }
+  if (hasPermission === false) {
+    return <Text>No access to camera</Text>;
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>
-        Latitud: {location ? location.coords.latitude : 'Loading...'}
-      </Text>
-      <Text style={styles.text}>
-        Longitud: {location ? location.coords.longitude : 'Loading...'}
-      </Text>
-      {location && (
-        <Button title="Open in Google Maps" onPress={openMaps} />
-      )}
-      {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+      <BarCodeScanner
+        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+        style={StyleSheet.absoluteFillObject}
+      />
+      {scanned && <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />}
     </View>
   );
 };
@@ -49,16 +43,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-  },
-  text: {
-    fontSize: 18,
-    marginBottom: 10,
-  },
-  errorText: {
-    color: 'red',
-    marginTop: 10,
   },
 });
 
-export default GPSPage;
+export default QRPage;

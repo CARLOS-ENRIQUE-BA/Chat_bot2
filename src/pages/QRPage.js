@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import { View, Text, Button, StyleSheet } from 'react-native';
 import { BarCodeScanner } from 'expo-barcode-scanner';
+import { useNavigation } from '@react-navigation/native';
 
 const QRPage = () => {
   const [hasPermission, setHasPermission] = useState(null);
-  const [scannedData, setScannedData] = useState(null);
+  const [scanned, setScanned] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     (async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted'); // Se guarda si se concede el permiso
+      setHasPermission(status === 'granted');
     })();
   }, []);
 
   const handleBarCodeScanned = ({ type, data }) => {
-    setScannedData(data); // Guarda los datos del QR escaneado
-  };
-
-  const handleScanAgain = () => {
-    setScannedData(null); // Resetea el estado para escanear de nuevo
+    setScanned(true);
+    navigation.navigate('GeminaiChat', { qrData: data });
+    setTimeout(() => setScanned(false), 1000); // Restablece el estado después de 1 segundo
   };
 
   if (hasPermission === null) {
@@ -31,17 +31,10 @@ const QRPage = () => {
   return (
     <View style={styles.container}>
       <BarCodeScanner
-        onBarCodeScanned={scannedData ? undefined : handleBarCodeScanned}
+        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
         style={StyleSheet.absoluteFillObject}
       />
-      {scannedData && (
-        <View style={styles.scannedContainer}>
-          <Text style={styles.scannedText}>
-            Información del QR: {scannedData}
-          </Text>
-          <Button title="Volver a escanear" onPress={handleScanAgain} />
-        </View>
-      )}
+      {scanned && <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />}
     </View>
   );
 };
@@ -51,19 +44,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  scannedContainer: {
-    position: 'absolute',
-    bottom: 50,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Fondo semi-transparente
-    padding: 10,
-    borderRadius: 5,
-  },
-  scannedText: {
-    fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 10, // Espaciado entre el texto y el botón
   },
 });
 

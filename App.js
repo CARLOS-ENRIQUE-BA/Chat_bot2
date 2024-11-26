@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import HomePage from './src/pages/HomePage';
 import QRPage from './src/pages/QRPage';
-import GeminiChat from './src/pages/GeminiChat'; // Importa la página de GeminaiChat
+import GeminaiChat from './src/pages/GeminiChat'; // Importa la página de GeminaiChat
 
 const Tab = createBottomTabNavigator();
 
@@ -35,7 +35,7 @@ export default function App() {
         />
         <Tab.Screen
           name="GeminaiChat"
-          component={GeminiChat}
+          component={GeminaiChat}
           options={{
             tabBarLabel: 'Chat',
             tabBarIcon: ({ color }) => <Ionicons name="chatbubbles-outline" color={color} size={24} />,

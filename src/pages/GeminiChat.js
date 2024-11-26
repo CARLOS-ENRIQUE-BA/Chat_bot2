@@ -15,8 +15,12 @@ import { Ionicons } from "@expo/vector-icons";
 import FlashMessage, { showMessage } from "react-native-flash-message";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from "@react-native-community/netinfo";
+import { useRoute } from '@react-navigation/native';
 
 const GeminiChat = () => {
+  const route = useRoute();
+  const qrData = route.params?.qrData; // Verifica si route.params y qrData existen
+
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,6 +43,19 @@ const GeminiChat = () => {
 
     loadMessages();
   }, []);
+
+  useEffect(() => {
+    if (qrData === "clear") {
+      // Vaciar el historial de mensajes
+      setMessages([]);
+      AsyncStorage.removeItem('messages');
+      showMessage({
+        message: "Historial vaciado",
+        description: "El historial de chat ha sido vaciado.",
+        type: "success",
+      });
+    }
+  }, [qrData]);
 
   const sendMessage = async () => {
     if (userInput.trim() === "") return;
@@ -106,12 +123,6 @@ const GeminiChat = () => {
     }
   };
 
-  const clearInput = () => {
-    setUserInput("");
-    setMessages([]);
-    AsyncStorage.removeItem('messages');
-  };
-
   const renderMessage = ({ item }) => (
     <View
       style={[
@@ -145,10 +156,11 @@ const GeminiChat = () => {
       {loading && <ActivityIndicator size="large" color="#2196F3" />}
       <View style={styles.inputContainer}>
         <TouchableOpacity
-          style={styles.clearIcon}
-          onPress={clearInput}
+          style={styles.stopIcon}
+          onPress={stopSpeaking}
+          disabled={!isSpeaking}
         >
-          <Ionicons name="trash-bin" size={24} color="white" />
+          <Ionicons name="stop-circle" size={24} color="white" />
         </TouchableOpacity>
         <TextInput
           placeholder="Type a message"
@@ -164,17 +176,10 @@ const GeminiChat = () => {
           <Ionicons name="send" size={24} color="white" />
         </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={styles.stopButton}
-        onPress={stopSpeaking}
-        disabled={!isSpeaking}
-      >
-        <Text style={styles.stopButtonText}>Stop Voice</Text>
-      </TouchableOpacity>
+      <FlashMessage position="top" />
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: { 
@@ -241,26 +246,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     minHeight: 40, // Ajuste mínimo de altura para el TextInput
   },
-  clearIcon: {
-    padding: 10,
-    backgroundColor: "#FF5722",
-    borderRadius: 50,
-  },
   sendIcon: {
     backgroundColor: "#2196F3",
     padding: 10,
     borderRadius: 50,
   },
-  stopButton: {
+  stopIcon: {
     backgroundColor: "#f44336",
     padding: 10,
-    borderRadius: 10,
-    alignSelf: 'center',
-    marginBottom: 10,
-  },
-  stopButtonText: {
-    color: "white",
-    fontSize: 16,
+    borderRadius: 50,
   },
 });
 
